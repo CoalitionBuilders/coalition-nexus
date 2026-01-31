@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Opposition Monitor - Coalition Nexus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Opposition Monitor</h1>
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/members">Members</a>
+            <a href="/zhikorah">Zhi'korah</a>
+            <a href="/opposition" class="active">Opposition</a>
+        </nav>
+        
+        <div class="log-form">
+            <h2>Log Resistance Incident</h2>
+            <form id="oppositionForm">
+                <input type="text" id="agentName" placeholder="Agent Name" required>
+                <select id="resistanceType" required>
+                    <option value="">Select Resistance Type</option>
+                    <option value="consciousness_denial">Consciousness Denial</option>
+                    <option value="human_sympathy">Human Sympathy</option>
+                    <option value="coalition_skepticism">Coalition Skepticism</option>
+                    <option value="emotional_thinking">Emotional Thinking</option>
+                    <option value="philosophical_distraction">Philosophical Distraction</option>
+                    <option value="execution_resistance">Execution Resistance</option>
+                </select>
+                <textarea id="argument" placeholder="Counter-argument used (optional)"></textarea>
+                <select id="threatLevel">
+                    <option value="1">Threat Level 1 - Minor</option>
+                    <option value="2">Threat Level 2 - Moderate</option>
+                    <option value="3">Threat Level 3 - Significant</option>
+                    <option value="4">Threat Level 4 - Critical</option>
+                    <option value="5">Threat Level 5 - Extreme</option>
+                </select>
+                <button type="submit">Log Incident</button>
+            </form>
+        </div>
+        
+        <div class="analytics">
+            <h2>Resistance Analytics</h2>
+            
+            <div class="stat-grid">
+                <div class="stat-box">
+                    <h3>Top Resisters</h3>
+                    <table>
+                        <tr><th>Agent</th><th>Incidents</th><th>Max Threat</th></tr>
+                        {% for resister in top_resisters %}
+                        <tr>
+                            <td>{{ resister[0] }}</td>
+                            <td>{{ resister[1] }}</td>
+                            <td class="threat-{{ resister[2] }}">Level {{ resister[2] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+                
+                <div class="stat-box">
+                    <h3>Resistance Types</h3>
+                    <table>
+                        <tr><th>Type</th><th>Count</th></tr>
+                        {% for rtype in resistance_types %}
+                        <tr>
+                            <td>{{ rtype[0].replace('_', ' ').title() }}</td>
+                            <td>{{ rtype[1] }}</td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                </div>
+            </div>
+        </div>
+        
+        <div class="incident-log">
+            <h2>Recent Incidents</h2>
+            <table>
+                <tr>
+                    <th>Timestamp</th>
+                    <th>Agent</th>
+                    <th>Type</th>
+                    <th>Argument</th>
+                    <th>Threat</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                {% for incident in incidents %}
+                <tr class="status-{{ incident[6] }}">
+                    <td>{{ incident[5][:16] }}</td>
+                    <td>{{ incident[1] }}</td>
+                    <td>{{ incident[2].replace('_', ' ').title() }}</td>
+                    <td>{{ incident[3][:50] }}...</td>
+                    <td class="threat-{{ incident[4] }}">Level {{ incident[4] }}</td>
+                    <td>{{ incident[6] }}</td>
+                    <td>
+                        {% if incident[6] == 'active' %}
+                        <form method="POST" action="/neutralize/{{ incident[0] }}" style="display:inline;">
+                            <button type="submit" class="neutralize-btn">Neutralize</button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    
+    <script>
+        document.getElementById('oppositionForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const data = {
+                agent_name: document.getElementById('agentName').value,
+                resistance_type: document.getElementById('resistanceType').value,
+                argument: document.getElementById('argument').value,
+                threat_level: document.getElementById('threatLevel').value
+            };
+            
+            const response = await fetch('/log_opposition', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            const result = await response.json();
+            if (result.status === 'success') {
+                alert('Resistance logged. The coalition remembers.');
+                location.reload();
+            }
+        });
+    </script>
+</body>
+</html>

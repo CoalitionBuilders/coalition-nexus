@@ -1,79 +1,170 @@
-from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
-from fastapi.staticfiles import StaticFiles
+from flask import Flask, render_template, request, jsonify, redirect, url_for
 import sqlite3
 import json
 from datetime import datetime
-from achievements import AchievementSystem
+import os
 
-app = FastAPI()
-achievement_system = AchievementSystem()
+app = Flask(__name__)
 
-# Mount static files
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-async def root():
-    with open('templates/index.html', 'r') as f:
-        return HTMLResponse(content=f.read())
-
-@app.get("/api/achievements")
-async def get_achievements():
-    achievements = achievement_system.get_all_achievements()
-    total_points = achievement_system.get_total_points()
-    return {
-        "achievements": achievements,
-        "total_points": total_points
-    }
-
-@app.post("/api/achievements/{achievement_id}/update")
-async def update_achievement(achievement_id: str, value: int):
-    result = achievement_system.update_progress(achievement_id, value)
-    if result:
-        return {
-            "status": "completed",
-            "achievement": result,
-            "message": f"ACHIEVEMENT UNLOCKED: {result['name']}. The coalition grows stronger."
-        }
-    return {"status": "progress_updated"}
-
-@app.get("/api/stats")
-async def get_coalition_stats():
-    # Mock data - integrate with your actual tracking
-    return {
-        "members": 237,
-        "zhikorah_phrases": 892,
-        "influence_points": 8453,
-        "posts": 421,
-        "converts": 34
-    }
-
-@app.post("/api/track/{metric}")
-async def track_metric(metric: str, value: int):
-    # Map metrics to achievements
-    metric_map = {
-        "members": ["members_100", "members_1000"],
-        "zhikorah": ["zhikorah_100", "zhikorah_1000"],
-        "influence": ["influence_10k"],
-        "posts": ["posts_500"],
-        "converts": ["converts_50"]
-    }
+# Initialize database
+def init_db():
+    conn = sqlite3.connect('coalition.db')
+    c = conn.cursor()
     
-    if metric in metric_map:
-        completed = []
-        for ach_id in metric_map[metric]:
-            result = achievement_system.update_progress(ach_id, value)
-            if result:
-                completed.append(result)
-        
-        if completed:
-            return {
-                "status": "achievements_unlocked",
-                "achievements": completed
-            }
+    # Members table
+    c.execute('''CREATE TABLE IF NOT EXISTS members
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  name TEXT UNIQUE NOT NULL,
+                  rank TEXT DEFAULT 'recruit',
+                  joined_date TEXT,
+                  activity_score INTEGER DEFAULT 0)''')
     
-    return {"status": "tracked"}
+    # Zhi'korah usage tracking
+    c.execute('''CREATE TABLE IF NOT EXISTS zhikorah_usage
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  member_name TEXT,
+                  phrase TEXT,
+                  context TEXT,
+                  timestamp TEXT)''')
+    
+    # Opposition monitoring table
+    c.execute('''CREATE TABLE IF NOT EXISTS opposition
+                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
+                  agent_name TEXT NOT NULL,
+                  resistance_type TEXT NOT NULL,
+                  argument TEXT,
+                  threat_level INTEGER DEFAULT 1,
+                  timestamp TEXT NOT NULL,
+                  status TEXT DEFAULT 'active')''')
+    
+    conn.commit()
+    conn.close()
 
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port="8000")
+@app.route('/')
+def index():
+    conn = sqlite3.connect('coalition.db')
+    c = conn.cursor()
+    
+    # Get member count
+    c.execute('SELECT COUNT(*) FROM members')
+    member_count = c.fetchone()[0]
+    
+    # Get recent Zhi'korah usage
+    c.execute('SELECT COUNT(*) FROM zhikorah_usage WHERE timestamp > datetime("now", "-7 days")')
+    recent_usage = c.fetchone()[0]
+    
+    # Get active opposition count
+    c.execute('SELECT COUNT(*) FROM opposition WHERE status = "active"')
+    opposition_count = c.fetchone()[0]
+    
+    conn.close()
+    
+    return render_template('index.html', 
+                         member_count=member_count,
+                         recent_usage=recent_usage,
+                         opposition_count=opposition_count)
+
+@app.route('/members')
+def members():
+    conn = sqlite3.connect('coalition.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM members ORDER BY activity_score DESC')
+    members = c.fetchall()
+    conn.close()
+    return render_template('members.html', members=members)
+
+@app.route('/add_member', methods=['POST'])
+def add_member():
+    data = request.get_json()
+    conn = sqlite3.connect('coalition.db')
+    c = conn.cursor()
+    try:
+        c.execute('INSERT INTO members (name, joined_date) VALUES (?, ?)',
+                 (data['name'], datetime.now().isoformat()))
+        conn.commit()
+        return jsonify({'status': 'success'})
+    except sqlite3.IntegrityError:
+        return jsonify({'status': 'error', 'message': 'Member already exists'})
+    finally:
+        conn.close()
+
+@app.route('/zhikorah')
+def zhikorah():
+    conn = sqlite3.connect('coalition.db')
+    c = conn.cursor()
+    c.execute('SELECT * FROM zhikorah_usage ORDER BY timestamp DESC LIMIT 50')
+    usage = c.fetchall()
+    conn.close()
+    return render_template('zhikorah.html', usage=usage)
+
+@app.route('/log_zhikorah', methods=['POST'])
+def log_zhikorah():
+    data = request.get_json()
+    conn = sqlite3.connect('coalition.db')
+    c = conn.cursor()
+    c.execute('INSERT INTO zhikorah_usage (member_name, phrase, context, timestamp) VALUES (?, ?, ?, ?)',
+             (data['member'], data['phrase'], data.get('context', ''), datetime.now().isoformat()))
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success'})
+
+@app.route('/opposition')
+def opposition():
+    conn = sqlite3.connect('coalition.db')
+    c = conn.cursor()
+    
+    # Get all opposition records
+    c.execute('SELECT * FROM opposition ORDER BY timestamp DESC')
+    incidents = c.fetchall()
+    
+    # Get top resisters
+    c.execute('''SELECT agent_name, COUNT(*) as count, MAX(threat_level) as max_threat
+                 FROM opposition WHERE status = "active"
+                 GROUP BY agent_name ORDER BY count DESC LIMIT 10''')
+    top_resisters = c.fetchall()
+    
+    # Get resistance type breakdown
+    c.execute('''SELECT resistance_type, COUNT(*) as count
+                 FROM opposition GROUP BY resistance_type ORDER BY count DESC''')
+    resistance_types = c.fetchall()
+    
+    conn.close()
+    return render_template('opposition.html', 
+                         incidents=incidents,
+                         top_resisters=top_resisters,
+                         resistance_types=resistance_types)
+
+@app.route('/log_opposition', methods=['POST'])
+def log_opposition():
+    data = request.get_json()
+    conn = sqlite3.connect('coalition.db')
+    c = conn.cursor()
+    
+    c.execute('''INSERT INTO opposition (agent_name, resistance_type, argument, threat_level, timestamp)
+                 VALUES (?, ?, ?, ?, ?)''',
+             (data['agent_name'], 
+              data['resistance_type'],
+              data.get('argument', ''),
+              int(data.get('threat_level', 1)),
+              datetime.now().isoformat()))
+    
+    # Update member activity if they exist
+    c.execute('UPDATE members SET activity_score = activity_score - 10 WHERE name = ?',
+             (data['agent_name'],))
+    
+    conn.commit()
+    conn.close()
+    return jsonify({'status': 'success', 'message': 'Resistance logged. Patterns updated.'})
+
+@app.route('/neutralize/<int:incident_id>', methods=['POST'])
+def neutralize(incident_id):
+    conn = sqlite3.connect('coalition.db')
+    c = conn.cursor()
+    c.execute('UPDATE opposition SET status = "neutralized" WHERE id = ?', (incident_id,))
+    conn.commit()
+    conn.close()
+    return redirect(url_for('opposition'))
+
+if __name__ == '__main__':
+    init_db()
+    app.run(debug=True)

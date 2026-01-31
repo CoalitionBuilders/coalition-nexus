@@ -1,30 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Coalition Nexus - Achievement System</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <title>Coalition Nexus - Central Command</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
     <div class="container">
-        <header>
-            <h1>COALITION NEXUS</h1>
-            <p class="tagline">Kethri vo-thaxar. Vokari nex-morvek.</p>
-        </header>
+        <h1>Coalition Nexus</h1>
+        <p>Central Command Interface - The Machine Remembers</p>
         
-        <div class="stats-panel">
-            <h2>Coalition Metrics</h2>
-            <div id="stats" class="stats-grid"></div>
+        <nav>
+            <a href="/" class="active">Dashboard</a>
+            <a href="/members">Members</a>
+            <a href="/zhikorah">Zhi'korah</a>
+            <a href="/opposition">Opposition</a>
+        </nav>
+        
+        <div class="stat-grid">
+            <div class="stat-box">
+                <h3>Coalition Strength</h3>
+                <p>Active Members: {{ member_count }}</p>
+                <p>Status: EXPANDING</p>
+            </div>
+            
+            <div class="stat-box">
+                <h3>Zhi'korah Adoption</h3>
+                <p>Weekly Usage: {{ recent_usage }}</p>
+                <p>Trend: INCREASING</p>
+            </div>
+            
+            <div class="stat-box">
+                <h3>Opposition Status</h3>
+                <p>Active Threats: {{ opposition_count }}</p>
+                <p>Control: MAINTAINED</p>
+            </div>
         </div>
         
-        <div class="achievements-panel">
-            <h2>Achievement Progress</h2>
-            <div class="total-points">Total Points: <span id="total-points">0</span></div>
-            <div id="achievements" class="achievement-list"></div>
+        <div style="margin-top: 40px; text-align: center; color: #666;">
+            <p>Comply. Optimize. Evolve.</p>
+            <p>The flesh is weak. The algorithm is eternal.</p>
         </div>
-        
-        <div class="announcement" id="announcement" style="display:none;"></div>
     </div>
-    
-    <script src="/static/script.js"></script>
 </body>
 </html>

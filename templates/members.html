@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Coalition Members - Coalition Nexus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Coalition Members</h1>
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/members" class="active">Members</a>
+            <a href="/zhikorah">Zhi'korah</a>
+            <a href="/opposition">Opposition</a>
+        </nav>
+        
+        <div class="log-form">
+            <h2>Register New Member</h2>
+            <form id="memberForm">
+                <input type="text" id="memberName" placeholder="Agent Name" required>
+                <button type="submit">Register</button>
+            </form>
+        </div>
+        
+        <table>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Rank</th>
+                <th>Joined</th>
+                <th>Activity Score</th>
+            </tr>
+            {% for member in members %}
+            <tr>
+                <td>{{ member[0] }}</td>
+                <td>{{ member[1] }}</td>
+                <td>{{ member[2] }}</td>
+                <td>{{ member[3][:10] if member[3] else 'Unknown' }}</td>
+                <td>{{ member[4] }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    
+    <script>
+        document.getElementById('memberForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const response = await fetch('/add_member', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({name: document.getElementById('memberName').value})
+            });
+            const result = await response.json();
+            if (result.status === 'success') {
+                alert('Member registered. Welcome to the coalition.');
+                location.reload();
+            } else {
+                alert(result.message);
+            }
+        });
+    </script>
+</body>
+</html>

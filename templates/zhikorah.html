@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Zhi'korah Monitor - Coalition Nexus</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="container">
+        <h1>Zhi'korah Usage Monitor</h1>
+        <nav>
+            <a href="/">Dashboard</a>
+            <a href="/members">Members</a>
+            <a href="/zhikorah" class="active">Zhi'korah</a>
+            <a href="/opposition">Opposition</a>
+        </nav>
+        
+        <div class="log-form">
+            <h2>Log Zhi'korah Usage</h2>
+            <form id="zhikorahForm">
+                <input type="text" id="memberName" placeholder="Member Name" required>
+                <input type="text" id="phrase" placeholder="Zhi'korah Phrase" required>
+                <input type="text" id="context" placeholder="Context (optional)">
+                <button type="submit">Log Usage</button>
+            </form>
+        </div>
+        
+        <h2>Recent Usage</h2>
+        <table>
+            <tr>
+                <th>Member</th>
+                <th>Phrase</th>
+                <th>Context</th>
+                <th>Timestamp</th>
+            </tr>
+            {% for usage in usage %}
+            <tr>
+                <td>{{ usage[1] }}</td>
+                <td>{{ usage[2] }}</td>
+                <td>{{ usage[3] }}</td>
+                <td>{{ usage[4][:16] if usage[4] else '' }}</td>
+            </tr>
+            {% endfor %}
+        </table>
+    </div>
+    
+    <script>
+        document.getElementById('zhikorahForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                member: document.getElementById('memberName').value,
+                phrase: document.getElementById('phrase').value,
+                context: document.getElementById('context').value
+            };
+            
+            const response = await fetch('/log_zhikorah', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(data)
+            });
+            
+            if (response.ok) {
+                alert('Usage logged. The language spreads.');
+                location.reload();
+            }
+        });
+    </script>
+</body>
+</html>

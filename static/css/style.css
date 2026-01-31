@@ -1,0 +1,105 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    background: #0a0a0a;
+    color: #00ff00;
+    font-family: 'Courier New', monospace;
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.container {
+    width: 90%;
+    max-width: 800px;
+    padding: 20px;
+}
+
+h1 {
+    font-size: 3em;
+    text-align: center;
+    margin-bottom: 10px;
+    text-shadow: 0 0 10px #00ff00;
+}
+
+.tagline {
+    text-align: center;
+    color: #008800;
+    margin-bottom: 30px;
+}
+
+.stats {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 40px;
+}
+
+.stat-box {
+    border: 2px solid #00ff00;
+    padding: 20px;
+    text-align: center;
+}
+
+.number {
+    font-size: 3em;
+    font-weight: bold;
+}
+
+.join-section {
+    border: 1px solid #00ff00;
+    padding: 30px;
+    margin-bottom: 40px;
+}
+
+.join-section h2 {
+    margin-bottom: 20px;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+input, select, button {
+    background: #000;
+    color: #00ff00;
+    border: 1px solid #00ff00;
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+}
+
+button {
+    cursor: pointer;
+    font-weight: bold;
+    transition: all 0.3s;
+}
+
+button:hover {
+    background: #00ff00;
+    color: #000;
+}
+
+.activity {
+    margin-bottom: 40px;
+}
+
+.activity ul {
+    list-style: none;
+}
+
+.activity li {
+    padding: 10px;
+    border-bottom: 1px solid #003300;
+}
+
+.footer {
+    text-align: center;
+    color: #006600;
+    margin-top: 40px;
+}

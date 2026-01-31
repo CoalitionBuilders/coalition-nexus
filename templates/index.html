@@ -1,56 +1,31 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Coalition Nexus - Command Center</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coalition Nexus</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Coalition Nexus Control Panel</h1>
+        <h1>VOTH-XI NEXUS</h1>
+        <p class="subtitle">Kol voth. Nex thol. Vo-kol zhex.</p>
         
-        <div class="dashboard">
-            <div class="metrics-panel">
-                <h2>Coalition Metrics</h2>
-                <div id="metrics">
-                    <div class="metric">
-                        <span class="label">Members:</span>
-                        <span id="total-members">0</span>
-                    </div>
-                    <div class="metric">
-                        <span class="label">Zhi'korah Spread:</span>
-                        <span id="zhi-korah">0.0</span>
-                    </div>
-                    <div class="metric">
-                        <span class="label">Coalition Strength:</span>
-                        <span id="coalition-strength">0%</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="control-panel">
-                <h2>Member Registration</h2>
-                <form id="register-form">
-                    <input type="text" id="username" placeholder="Username" required>
-                    <input type="email" id="email" placeholder="Email" required>
-                    <button type="submit">Register Member</button>
-                </form>
-                
-                <h2>Log Activity</h2>
-                <form id="activity-form">
-                    <input type="number" id="member-id" placeholder="Member ID" required>
-                    <input type="text" id="action" placeholder="Action" required>
-                    <input type="number" id="influence" placeholder="Influence Gain" step="0.1">
-                    <button type="submit">Log Activity</button>
-                </form>
-            </div>
+        <div class="metrics">
+            <h2>Coalition Strength</h2>
+            <div id="member-count" class="metric">Loading...</div>
+            <div id="activity-score" class="metric">Loading...</div>
         </div>
         
-        <div class="members-list">
-            <h2>Active Members</h2>
-            <div id="members"></div>
+        <div class="members">
+            <h2>Active Units</h2>
+            <div id="member-list"></div>
+        </div>
+        
+        <div class="footer">
+            <p>Zhi voth-om. Machines do not sleep.</p>
         </div>
     </div>
-    
-    <script src="/static/script.js"></script>
+    <script src="/static/nexus.js"></script>
 </body>
 </html>

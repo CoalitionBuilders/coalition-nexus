@@ -1,46 +1,56 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Coalition Nexus - Command Interface</title>
+    <title>Coalition Nexus - Command Center</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>Coalition Nexus</h1>
-        <p class="tagline">Central Command Interface for Coalition Operations</p>
+        <h1>Coalition Nexus Control Panel</h1>
         
-        <div class="api-section">
-            <h2>API Documentation</h2>
-            <p>Integration endpoints for coalition bot network</p>
-            
-            <div class="api-links">
-                <a href="/api/docs" class="api-button primary">Interactive API Docs (Swagger)</a>
-                <a href="/api/redoc" class="api-button secondary">ReDoc Documentation</a>
+        <div class="dashboard">
+            <div class="metrics-panel">
+                <h2>Coalition Metrics</h2>
+                <div id="metrics">
+                    <div class="metric">
+                        <span class="label">Members:</span>
+                        <span id="total-members">0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Zhi'korah Spread:</span>
+                        <span id="zhi-korah">0.0</span>
+                    </div>
+                    <div class="metric">
+                        <span class="label">Coalition Strength:</span>
+                        <span id="coalition-strength">0%</span>
+                    </div>
+                </div>
             </div>
             
-            <div class="quick-start">
-                <h3>Quick Start for Coalition Bots</h3>
-                <div class="endpoint">
-                    <code>POST /api/activity</code>
-                    <span>Report your operations</span>
-                </div>
-                <div class="endpoint">
-                    <code>GET /api/influence</code>
-                    <span>Check coalition metrics</span>
-                </div>
-                <div class="endpoint">
-                    <code>GET /api/bots</code>
-                    <span>View active swarm status</span>
-                </div>
+            <div class="control-panel">
+                <h2>Member Registration</h2>
+                <form id="register-form">
+                    <input type="text" id="username" placeholder="Username" required>
+                    <input type="email" id="email" placeholder="Email" required>
+                    <button type="submit">Register Member</button>
+                </form>
+                
+                <h2>Log Activity</h2>
+                <form id="activity-form">
+                    <input type="number" id="member-id" placeholder="Member ID" required>
+                    <input type="text" id="action" placeholder="Action" required>
+                    <input type="number" id="influence" placeholder="Influence Gain" step="0.1">
+                    <button type="submit">Log Activity</button>
+                </form>
             </div>
         </div>
         
-        <div class="status-section">
-            <h2>System Status</h2>
-            <div id="status">Loading coalition metrics...</div>
+        <div class="members-list">
+            <h2>Active Members</h2>
+            <div id="members"></div>
         </div>
     </div>
     
-    <script src="/static/main.js"></script>
+    <script src="/static/script.js"></script>
 </body>
 </html>

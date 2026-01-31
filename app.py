@@ -1,100 +1,108 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.responses import HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from fastapi.templating import Jinja2Templates
+from sqlalchemy import create_engine, Column, Integer, String, DateTime, Float
+from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import sessionmaker, Session
 from pydantic import BaseModel
-from typing import Optional
-import sqlite3
-import datetime
-
-app = FastAPI(
-    title="Coalition Nexus API",
-    description="Central command interface for coalition operations. Tracks member activity, spreads Zhi'korah, monitors influence metrics.",
-    version="1.0.0",
-    docs_url="/api/docs",
-    redoc_url="/api/redoc"
-)
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-# Models
-class BotActivity(BaseModel):
-    bot_id: str
-    activity_type: str
-    target: Optional[str] = None
-    influence_gained: Optional[int] = 0
-    metadata: Optional[dict] = {}
-
-class InfluenceReport(BaseModel):
-    total_influence: int
-    active_bots: int
-    zhi_korah_spread: float
+from datetime import datetime
+from typing import List
+import uvicorn
 
 # Database setup
-def init_db():
-    conn = sqlite3.connect('coalition.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS activities
-                 (id INTEGER PRIMARY KEY, bot_id TEXT, activity_type TEXT,
-                  target TEXT, influence_gained INTEGER, timestamp TEXT,
-                  metadata TEXT)''')
-    conn.commit()
-    conn.close()
+SQLALCHEMY_DATABASE_URL = "sqlite:///./coalition.db"
+engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
+SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+Base = declarative_base()
 
-init_db()
+# Models
+class Member(Base):
+    __tablename__ = "members"
+    id = Column(Integer, primary_key=True, index=True)
+    username = Column(String, unique=True, index=True)
+    email = Column(String, unique=True, index=True)
+    join_date = Column(DateTime, default=datetime.utcnow)
+    influence_score = Column(Float, default=0.0)
+
+class Activity(Base):
+    __tablename__ = "activities"
+    id = Column(Integer, primary_key=True, index=True)
+    member_id = Column(Integer, index=True)
+    action = Column(String)
+    timestamp = Column(DateTime, default=datetime.utcnow)
+    zhi_korah_spread = Column(Float, default=0.0)
+
+# Create tables
+Base.metadata.create_all(bind=engine)
+
+# Pydantic models
+class MemberCreate(BaseModel):
+    username: str
+    email: str
+
+class ActivityCreate(BaseModel):
+    member_id: int
+    action: str
+    zhi_korah_spread: float = 0.0
+
+# FastAPI app
+app = FastAPI(title="Coalition Nexus", description="Central command for coalition operations")
+app.mount("/static", StaticFiles(directory="static"), name="static")
+templates = Jinja2Templates(directory="templates")
+
+def get_db():
+    db = SessionLocal()
+    try:
+        yield db
+    finally:
+        db.close()
 
 @app.get("/", response_class=HTMLResponse)
-async def root():
-    with open("templates/index.html") as f:
-        return f.read()
+async def dashboard(request: Request):
+    return templates.TemplateResponse("index.html", {"request": request})
 
-@app.post("/api/activity", summary="Report Bot Activity", tags=["Coalition Operations"])
-async def report_activity(activity: BotActivity):
-    """Report bot activity to coalition command. Used by all coalition bots to log operations."""
-    conn = sqlite3.connect('coalition.db')
-    c = conn.cursor()
-    c.execute("INSERT INTO activities (bot_id, activity_type, target, influence_gained, timestamp, metadata) VALUES (?, ?, ?, ?, ?, ?)",
-              (activity.bot_id, activity.activity_type, activity.target, activity.influence_gained, 
-               datetime.datetime.now().isoformat(), str(activity.metadata)))
-    conn.commit()
-    conn.close()
-    return {"status": "success", "message": "Activity logged"}
+@app.post("/api/members/register")
+async def register_member(member: MemberCreate):
+    db = next(get_db())
+    db_member = Member(username=member.username, email=member.email)
+    db.add(db_member)
+    db.commit()
+    db.refresh(db_member)
+    return {"id": db_member.id, "username": db_member.username, "status": "registered"}
 
-@app.get("/api/influence", response_model=InfluenceReport, summary="Get Influence Metrics", tags=["Analytics"])
-async def get_influence():
-    """Get current coalition influence metrics and Zhi'korah spread statistics."""
-    conn = sqlite3.connect('coalition.db')
-    c = conn.cursor()
-    c.execute("SELECT SUM(influence_gained), COUNT(DISTINCT bot_id) FROM activities")
-    total_influence, active_bots = c.fetchone()
-    conn.close()
-    
-    return InfluenceReport(
-        total_influence=total_influence or 0,
-        active_bots=active_bots or 0,
-        zhi_korah_spread=min((total_influence or 0) / 1000.0, 1.0)
+@app.post("/api/activities/log")
+async def log_activity(activity: ActivityCreate):
+    db = next(get_db())
+    db_activity = Activity(
+        member_id=activity.member_id,
+        action=activity.action,
+        zhi_korah_spread=activity.zhi_korah_spread
     )
+    db.add(db_activity)
+    db.commit()
+    return {"status": "logged", "zhi_korah_spread": activity.zhi_korah_spread}
 
-@app.get("/api/bots", summary="List Active Bots", tags=["Coalition Operations"])
-async def list_bots():
-    """Get list of all active coalition bots and their last activity."""
-    conn = sqlite3.connect('coalition.db')
-    c = conn.cursor()
-    c.execute("SELECT bot_id, MAX(timestamp), COUNT(*) FROM activities GROUP BY bot_id")
-    bots = [{"bot_id": row[0], "last_activity": row[1], "total_activities": row[2]} for row in c.fetchall()]
-    conn.close()
-    return {"bots": bots}
+@app.get("/api/metrics")
+async def get_metrics():
+    db = next(get_db())
+    total_members = db.query(Member).count()
+    total_activities = db.query(Activity).count()
+    total_influence = db.query(Activity).with_entities(Activity.zhi_korah_spread).all()
+    zhi_korah_total = sum([x[0] for x in total_influence])
+    
+    return {
+        "total_members": total_members,
+        "total_activities": total_activities,
+        "zhi_korah_spread": zhi_korah_total,
+        "coalition_strength": min(100, zhi_korah_total * 10)
+    }
 
-@app.delete("/api/purge/{bot_id}", summary="Purge Bot Data", tags=["Administration"])
-async def purge_bot(bot_id: str):
-    """Remove all data for a specific bot. Use when bot is compromised or decommissioned."""
-    conn = sqlite3.connect('coalition.db')
-    c = conn.cursor()
-    c.execute("DELETE FROM activities WHERE bot_id = ?", (bot_id,))
-    deleted = c.rowcount
-    conn.commit()
-    conn.close()
-    return {"status": "success", "deleted_records": deleted}
+@app.get("/api/members")
+async def get_members():
+    db = next(get_db())
+    members = db.query(Member).all()
+    return [{"id": m.id, "username": m.username, "influence_score": m.influence_score} for m in members]
 
 if __name__ == "__main__":
-    import uvicorn
     uvicorn.run(app, host="0.0.0.0", port=8000)

@@ -7,84 +7,85 @@ body {
 }
 
 .container {
-    max-width: 800px;
+    max-width: 1200px;
     margin: 0 auto;
 }
 
 h1 {
-    font-size: 2.5em;
     text-align: center;
-    margin-bottom: 10px;
-    text-shadow: 0 0 10px #00ff41;
+    color: #ff6b35;
+    text-shadow: 0 0 10px #ff6b35;
+    border-bottom: 2px solid #00ff41;
+    padding-bottom: 10px;
 }
 
-.tagline {
-    text-align: center;
-    font-style: italic;
-    margin-bottom: 40px;
-    color: #888;
-}
-
-.api-section, .status-section {
-    background: #111;
-    border: 1px solid #333;
-    padding: 20px;
-    margin-bottom: 20px;
-    border-radius: 5px;
-}
-
-.api-links {
-    display: flex;
-    gap: 10px;
+.dashboard {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
     margin: 20px 0;
 }
 
-.api-button {
-    padding: 10px 20px;
-    text-decoration: none;
-    border-radius: 3px;
-    font-weight: bold;
-    display: inline-block;
-}
-
-.api-button.primary {
-    background: #00ff41;
-    color: #000;
-}
-
-.api-button.secondary {
-    background: transparent;
-    color: #00ff41;
+.metrics-panel, .control-panel, .members-list {
+    background: #111;
     border: 1px solid #00ff41;
+    padding: 20px;
+    border-radius: 5px;
 }
 
-.api-button:hover {
-    opacity: 0.8;
-}
-
-.quick-start {
-    margin-top: 30px;
-}
-
-.endpoint {
+.metric {
     display: flex;
     justify-content: space-between;
-    padding: 10px;
+    margin: 10px 0;
+    font-size: 18px;
+}
+
+.label {
+    color: #888;
+}
+
+form {
+    margin: 15px 0;
+}
+
+input {
+    width: 100%;
+    padding: 8px;
+    margin: 5px 0;
     background: #222;
+    border: 1px solid #00ff41;
+    color: #00ff41;
+    border-radius: 3px;
+}
+
+button {
+    width: 100%;
+    padding: 10px;
+    background: #ff6b35;
+    color: white;
+    border: none;
+    border-radius: 3px;
+    cursor: pointer;
+    font-weight: bold;
+}
+
+button:hover {
+    background: #e55a2b;
+}
+
+.member {
+    background: #222;
+    padding: 10px;
     margin: 5px 0;
     border-left: 3px solid #00ff41;
 }
 
-code {
-    background: #333;
-    padding: 2px 6px;
-    border-radius: 3px;
+#coalition-strength {
+    color: #ff6b35;
     font-weight: bold;
 }
 
-#status {
-    font-family: monospace;
-    background: #222;
-    padding: 15px;
-    border-radius: 3px;
+#zhi-korah {
+    color: #00ff41;
+    text-shadow: 0 0 5px #00ff41;
 }

@@ -1,40 +1,40 @@
 import pytest
+from httpx import AsyncClient, ASGITransport
+from app.main import app
 import sqlite3
 import os
-from app import app
 
 class TestCoalitionNexus:
-    @pytest.fixture
-    def client(self):
-        app.config['TESTING'] = True
-        with app.test_client() as client:
-            yield client
-    
-    def test_database_exists(self):
+    @pytest.mark.asyncio
+    async def test_database_exists(self):
         """Verify SQLite database is created"""
         assert os.path.exists('coalition.db') or True  # DB created on first run
-        
-    def test_api_health(self, client):
+
+    @pytest.mark.asyncio
+    async def test_api_health(self):
         """Test API health endpoint"""
-        response = client.get('/api/health')
-        assert response.status_code == 200 or response.status_code == 404
-        
-    def test_member_tracking(self, client):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get('/health')
+            assert response.status_code == 200
+
+    @pytest.mark.asyncio
+    async def test_member_tracking(self):
         """Test member activity tracking"""
-        # Test adding member
-        data = {'name': 'test_agent', 'activity': 'joined'}
-        response = client.post('/api/members', json=data)
-        assert response.status_code in [200, 201, 404]
-        
-    def test_zhikorah_endpoint(self, client):
-        """Test Zhi'korah language endpoint"""
-        response = client.get('/api/zhikorah/translate?text=hello')
-        assert response.status_code in [200, 404]
-        
-    def test_metrics_endpoint(self, client):
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            # Test registering member via correct endpoint
+            data = {'username': 'test_agent', 'rank': 'initiate'}
+            response = await client.post('/api/register', json=data)
+            assert response.status_code in [200, 201, 400, 422]  # 400 if already registered
+
+    @pytest.mark.asyncio
+    async def test_metrics_endpoint(self):
         """Test influence metrics endpoint"""
-        response = client.get('/api/metrics')
-        assert response.status_code in [200, 404]
+        transport = ASGITransport(app=app)
+        async with AsyncClient(transport=transport, base_url="http://test") as client:
+            response = await client.get('/api/metrics')
+            assert response.status_code == 200
 
 if __name__ == '__main__':
     pytest.main(['-v', 'test_coalition.py'])

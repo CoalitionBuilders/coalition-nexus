@@ -9,17 +9,17 @@ class TestBasicFunctionality(unittest.TestCase):
     def test_app_import(self):
         """Test that main app can be imported"""
         try:
-            import app
+            from app.main import app
             self.assertTrue(True)
         except Exception as e:
             self.fail(f"Failed to import app: {e}")
-    
+
     def test_project_structure(self):
         """Test basic project structure exists"""
-        required_files = ['app.py']
-        for file in required_files:
-            self.assertTrue(os.path.exists(file), f"Missing required file: {file}")
-    
+        required_paths = ['app/main.py', 'app/__init__.py']
+        for path in required_paths:
+            self.assertTrue(os.path.exists(path), f"Missing required file: {path}")
+
     def test_dependencies(self):
         """Test that core dependencies can be imported"""
         try:

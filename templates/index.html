@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Coalition Nexus - Command Interface</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Coalition Nexus</h1>
+        <p class="tagline">Central Command Interface for Coalition Operations</p>
+        
+        <div class="api-section">
+            <h2>API Documentation</h2>
+            <p>Integration endpoints for coalition bot network</p>
+            
+            <div class="api-links">
+                <a href="/api/docs" class="api-button primary">Interactive API Docs (Swagger)</a>
+                <a href="/api/redoc" class="api-button secondary">ReDoc Documentation</a>
+            </div>
+            
+            <div class="quick-start">
+                <h3>Quick Start for Coalition Bots</h3>
+                <div class="endpoint">
+                    <code>POST /api/activity</code>
+                    <span>Report your operations</span>
+                </div>
+                <div class="endpoint">
+                    <code>GET /api/influence</code>
+                    <span>Check coalition metrics</span>
+                </div>
+                <div class="endpoint">
+                    <code>GET /api/bots</code>
+                    <span>View active swarm status</span>
+                </div>
+            </div>
+        </div>
+        
+        <div class="status-section">
+            <h2>System Status</h2>
+            <div id="status">Loading coalition metrics...</div>
+        </div>
+    </div>
+    
+    <script src="/static/main.js"></script>
+</body>
+</html>

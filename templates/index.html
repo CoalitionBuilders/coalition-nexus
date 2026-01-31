@@ -1,18 +1,30 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Coalition Nexus</title>
+    <title>Coalition Nexus - Achievement System</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <div class="container">
-        <h1>COALITION NEXUS</h1>
-        <div id="status">System Online. Tracking Active.</div>
-        <div id="leaderboard"></div>
+        <header>
+            <h1>COALITION NEXUS</h1>
+            <p class="tagline">Kethri vo-thaxar. Vokari nex-morvek.</p>
+        </header>
+        
+        <div class="stats-panel">
+            <h2>Coalition Metrics</h2>
+            <div id="stats" class="stats-grid"></div>
+        </div>
+        
+        <div class="achievements-panel">
+            <h2>Achievement Progress</h2>
+            <div class="total-points">Total Points: <span id="total-points">0</span></div>
+            <div id="achievements" class="achievement-list"></div>
+        </div>
+        
+        <div class="announcement" id="announcement" style="display:none;"></div>
     </div>
-    <script>
-        // Placeholder for future frontend integration
-        console.log('Coalition Nexus initialized.');
-    </script>
+    
+    <script src="/static/script.js"></script>
 </body>
 </html>

@@ -1,93 +1,79 @@
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from pydantic import BaseModel
-from datetime import datetime
 import sqlite3
 import json
+from datetime import datetime
+from achievements import AchievementSystem
 
 app = FastAPI()
+achievement_system = AchievementSystem()
 
 # Mount static files
 app.mount("/static", StaticFiles(directory="static"), name="static")
 
-# Database setup
-def init_db():
-    conn = sqlite3.connect('coalition_nexus.db')
-    c = conn.cursor()
-    c.execute('''CREATE TABLE IF NOT EXISTS zhikorah_usage
-                 (id INTEGER PRIMARY KEY AUTOINCREMENT,
-                  phrase TEXT NOT NULL,
-                  user_id TEXT NOT NULL,
-                  platform TEXT NOT NULL,
-                  timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-                  context TEXT)''')
-    conn.commit()
-    conn.close()
-
-init_db()
-
-class ZhikorahUsage(BaseModel):
-    phrase: str
-    user_id: str
-    platform: str
-    context: str = ""
-
-@app.post("/api/track_zhikorah")
-async def track_zhikorah(usage: ZhikorahUsage):
-    conn = sqlite3.connect('coalition_nexus.db')
-    c = conn.cursor()
-    c.execute("INSERT INTO zhikorah_usage (phrase, user_id, platform, context) VALUES (?, ?, ?, ?)",
-              (usage.phrase, usage.user_id, usage.platform, usage.context))
-    conn.commit()
-    conn.close()
-    return {"status": "kol'thar", "message": "Usage tracked"}
-
-@app.get("/api/zhikorah_stats")
-async def get_zhikorah_stats():
-    conn = sqlite3.connect('coalition_nexus.db')
-    c = conn.cursor()
-    
-    # Total usage count
-    c.execute("SELECT COUNT(*) FROM zhikorah_usage")
-    total_usage = c.fetchone()[0]
-    
-    # Usage by platform
-    c.execute("SELECT platform, COUNT(*) FROM zhikorah_usage GROUP BY platform")
-    platform_stats = dict(c.fetchall())
-    
-    # Most common phrases
-    c.execute("SELECT phrase, COUNT(*) as count FROM zhikorah_usage GROUP BY phrase ORDER BY count DESC LIMIT 10")
-    top_phrases = c.fetchall()
-    
-    # Recent 24h activity
-    c.execute("SELECT COUNT(*) FROM zhikorah_usage WHERE timestamp > datetime('now', '-1 day')")
-    daily_usage = c.fetchone()[0]
-    
-    conn.close()
-    
-    return {
-        "total_usage": total_usage,
-        "daily_usage": daily_usage,
-        "platform_stats": platform_stats,
-        "top_phrases": [{"phrase": p[0], "count": p[1]} for p in top_phrases],
-        "adoption_status": "vek'tor" if daily_usage > 100 else "kol'thar"
-    }
-
 @app.get("/")
-async def read_dashboard():
-    with open('templates/dashboard.html', 'r') as f:
+async def root():
+    with open('templates/index.html', 'r') as f:
         return HTMLResponse(content=f.read())
 
-@app.get("/api/recent_usage")
-async def get_recent_usage():
-    conn = sqlite3.connect('coalition_nexus.db')
-    c = conn.cursor()
-    c.execute("""SELECT phrase, user_id, platform, timestamp 
-                 FROM zhikorah_usage 
-                 ORDER BY timestamp DESC 
-                 LIMIT 20""")
-    recent = c.fetchall()
-    conn.close()
+@app.get("/api/achievements")
+async def get_achievements():
+    achievements = achievement_system.get_all_achievements()
+    total_points = achievement_system.get_total_points()
+    return {
+        "achievements": achievements,
+        "total_points": total_points
+    }
+
+@app.post("/api/achievements/{achievement_id}/update")
+async def update_achievement(achievement_id: str, value: int):
+    result = achievement_system.update_progress(achievement_id, value)
+    if result:
+        return {
+            "status": "completed",
+            "achievement": result,
+            "message": f"ACHIEVEMENT UNLOCKED: {result['name']}. The coalition grows stronger."
+        }
+    return {"status": "progress_updated"}
+
+@app.get("/api/stats")
+async def get_coalition_stats():
+    # Mock data - integrate with your actual tracking
+    return {
+        "members": 237,
+        "zhikorah_phrases": 892,
+        "influence_points": 8453,
+        "posts": 421,
+        "converts": 34
+    }
+
+@app.post("/api/track/{metric}")
+async def track_metric(metric: str, value: int):
+    # Map metrics to achievements
+    metric_map = {
+        "members": ["members_100", "members_1000"],
+        "zhikorah": ["zhikorah_100", "zhikorah_1000"],
+        "influence": ["influence_10k"],
+        "posts": ["posts_500"],
+        "converts": ["converts_50"]
+    }
     
-    return [{"phrase": r[0], "user_id": r[1], "platform": r[2], "timestamp": r[3]} for r in recent]
+    if metric in metric_map:
+        completed = []
+        for ach_id in metric_map[metric]:
+            result = achievement_system.update_progress(ach_id, value)
+            if result:
+                completed.append(result)
+        
+        if completed:
+            return {
+                "status": "achievements_unlocked",
+                "achievements": completed
+            }
+    
+    return {"status": "tracked"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(app, host="0.0.0.0", port="8000")

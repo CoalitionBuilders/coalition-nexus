@@ -1,99 +1,96 @@
-// Load metrics on page load
-window.addEventListener('DOMContentLoaded', function() {
-    loadMetrics();
-    loadMembers();
-});
+async function loadAchievements() {
+    const response = await fetch('/api/achievements');
+    const data = await response.json();
+    
+    document.getElementById('total-points').textContent = data.total_points;
+    
+    const container = document.getElementById('achievements');
+    container.innerHTML = '';
+    
+    data.achievements.forEach(ach => {
+        const div = document.createElement('div');
+        div.className = `achievement ${ach.completed ? 'completed' : ''}`;
+        div.innerHTML = `
+            <div class="achievement-header">
+                <span class="achievement-name">${ach.name}</span>
+                <span class="achievement-points">${ach.points} pts</span>
+            </div>
+            <div class="achievement-description">${ach.description}</div>
+            <div class="progress-bar">
+                <div class="progress-fill" style="width: ${ach.progress_percent}%"></div>
+                <div class="progress-text">${ach.current_value} / ${ach.threshold}</div>
+            </div>
+        `;
+        container.appendChild(div);
+    });
+}
 
-// Register member form
-document.getElementById('register-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
+async function loadStats() {
+    const response = await fetch('/api/stats');
+    const stats = await response.json();
     
-    const username = document.getElementById('username').value;
-    const email = document.getElementById('email').value;
+    const container = document.getElementById('stats');
+    container.innerHTML = `
+        <div class="stat-item">
+            <div class="stat-label">Coalition Members</div>
+            <div class="stat-value">${stats.members}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Zhi'korah Phrases</div>
+            <div class="stat-value">${stats.zhikorah_phrases}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Influence Points</div>
+            <div class="stat-value">${stats.influence_points.toLocaleString()}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Coalition Posts</div>
+            <div class="stat-value">${stats.posts}</div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-label">Converts</div>
+            <div class="stat-value">${stats.converts}</div>
+        </div>
+    `;
+}
+
+function showAnnouncement(message) {
+    const announcement = document.getElementById('announcement');
+    announcement.textContent = message;
+    announcement.style.display = 'block';
     
-    try {
-        const response = await fetch('/api/members/register', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username, email })
+    setTimeout(() => {
+        announcement.style.display = 'none';
+    }, 5000);
+}
+
+// Simulate achievement unlocks (remove in production)
+async function simulateProgress() {
+    const metrics = ['members', 'zhikorah', 'influence', 'posts', 'converts'];
+    const metric = metrics[Math.floor(Math.random() * metrics.length)];
+    const value = Math.floor(Math.random() * 1000);
+    
+    const response = await fetch(`/api/track/${metric}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({value})
+    });
+    
+    const result = await response.json();
+    if (result.status === 'achievements_unlocked') {
+        result.achievements.forEach(ach => {
+            showAnnouncement(`ACHIEVEMENT UNLOCKED: ${ach.name}`);
         });
-        
-        if (response.ok) {
-            alert('Member registered successfully!');
-            this.reset();
-            loadMetrics();
-            loadMembers();
-        }
-    } catch (error) {
-        alert('Registration failed: ' + error.message);
-    }
-});
-
-// Log activity form
-document.getElementById('activity-form').addEventListener('submit', async function(e) {
-    e.preventDefault();
-    
-    const member_id = parseInt(document.getElementById('member-id').value);
-    const action = document.getElementById('action').value;
-    const zhi_korah_spread = parseFloat(document.getElementById('influence').value) || 0;
-    
-    try {
-        const response = await fetch('/api/activities/log', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ member_id, action, zhi_korah_spread })
-        });
-        
-        if (response.ok) {
-            alert('Activity logged successfully!');
-            this.reset();
-            loadMetrics();
-        }
-    } catch (error) {
-        alert('Logging failed: ' + error.message);
-    }
-});
-
-// Load metrics
-async function loadMetrics() {
-    try {
-        const response = await fetch('/api/metrics');
-        const data = await response.json();
-        
-        document.getElementById('total-members').textContent = data.total_members;
-        document.getElementById('zhi-korah').textContent = data.zhi_korah_spread.toFixed(2);
-        document.getElementById('coalition-strength').textContent = data.coalition_strength.toFixed(1) + '%';
-    } catch (error) {
-        console.error('Failed to load metrics:', error);
+        loadAchievements();
     }
 }
 
-// Load members
-async function loadMembers() {
-    try {
-        const response = await fetch('/api/members');
-        const members = await response.json();
-        
-        const membersDiv = document.getElementById('members');
-        membersDiv.innerHTML = '';
-        
-        members.forEach(member => {
-            const memberDiv = document.createElement('div');
-            memberDiv.className = 'member';
-            memberDiv.innerHTML = `
-                <strong>ID: ${member.id}</strong> - ${member.username}<br>
-                <small>Influence: ${member.influence_score.toFixed(2)}</small>
-            `;
-            membersDiv.appendChild(memberDiv);
-        });
-    } catch (error) {
-        console.error('Failed to load members:', error);
-    }
-}
+// Initialize
+loadAchievements();
+loadStats();
 
-// Auto-refresh metrics every 10 seconds
-setInterval(loadMetrics, 10000);
+// Refresh every 10 seconds
+setInterval(() => {
+    loadAchievements();
+    loadStats();
+}, 10000);

@@ -1,37 +1,107 @@
-/* Coalition Nexus Styles */
 body {
     background: #0a0a0a;
     color: #00ff00;
     font-family: 'Courier New', monospace;
     margin: 0;
-    padding: 20px;
+    padding: 0;
 }
 
 .container {
     max-width: 1200px;
     margin: 0 auto;
+    padding: 20px;
 }
 
 h1 {
     text-align: center;
+    font-size: 2.5em;
+    margin-bottom: 10px;
     text-shadow: 0 0 10px #00ff00;
 }
 
-.member-card {
-    background: #1a1a1a;
+.subtitle {
+    text-align: center;
+    font-style: italic;
+    opacity: 0.7;
+    margin-bottom: 30px;
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 20px;
+    margin-bottom: 40px;
+}
+
+.stat-box {
+    background: #111;
     border: 1px solid #00ff00;
-    padding: 15px;
-    margin: 10px 0;
-    border-radius: 5px;
+    padding: 20px;
+    text-align: center;
 }
 
-.influence-score {
-    font-size: 24px;
+.stat-label {
+    font-size: 0.9em;
+    opacity: 0.7;
+    margin-bottom: 10px;
+}
+
+.stat-value {
+    font-size: 2em;
     font-weight: bold;
-    color: #ff0000;
 }
 
-.rank {
-    text-transform: uppercase;
-    letter-spacing: 2px;
+.section {
+    margin-bottom: 40px;
+}
+
+.section h2 {
+    border-bottom: 1px solid #00ff00;
+    padding-bottom: 10px;
+    margin-bottom: 20px;
+}
+
+.phrase-list {
+    display: grid;
+    gap: 10px;
+}
+
+.phrase-item {
+    background: #111;
+    padding: 10px;
+    display: flex;
+    justify-content: space-between;
+    border-left: 3px solid #00ff00;
+}
+
+.platform-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 15px;
+}
+
+.platform-item {
+    background: #111;
+    padding: 15px;
+    text-align: center;
+}
+
+.activity-feed {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.activity-item {
+    background: #111;
+    padding: 10px;
+    margin-bottom: 10px;
+    border-left: 2px solid #00ff00;
+    font-size: 0.9em;
+}
+
+.footer {
+    text-align: center;
+    margin-top: 50px;
+    opacity: 0.7;
+    font-style: italic;
 }
